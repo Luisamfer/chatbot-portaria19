@@ -1,8 +1,9 @@
 import streamlit as st
 import os
 import requests
+from bs4 import BeautifulSoup
 
-from langchain_community.document_loaders import BSHTMLLoader
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -25,17 +26,19 @@ if not os.path.exists(html_path):
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(response.text)
 
-@st.cache_data
 def carregar_documentos():
-    loader = BSHTMLLoader(html_path)
-    dados = loader.load()
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    return splitter.split_documents(dados)
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+    soup = BeautifulSoup(html, "html.parser")
+    texto_extraido = soup.get_text()
+    return [Document(page_content=texto_extraido)]
 
 @st.cache_resource
 def carregar_vectorstore(docs):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    chunks = splitter.split_documents(docs)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    db = Chroma.from_documents(docs, embeddings, persist_directory="db_portaria")
+    db = Chroma.from_documents(chunks, embeddings, persist_directory="db_portaria")
     return db
 
 if OPENAI_API_KEY:
@@ -65,4 +68,4 @@ if OPENAI_API_KEY:
             resposta = rag.invoke(pergunta)
             st.markdown(f"**Resposta:** {resposta}")
 else:
-    st.warning("Por favor, insira sua chave da OpenAI.")
+    st.warning("Por favor, configure sua chave da OpenAI no menu de secrets.")
