@@ -6,6 +6,5 @@ langchain-openai
 chromadb
 faiss-cpu
 sentence-transformers
-requests
 beautifulsoup4
 html5lib
