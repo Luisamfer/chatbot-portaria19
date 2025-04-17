@@ -1,10 +1,9 @@
 streamlit
-beautifulsoup4
-html5lib
 langchain
 langchain-community
-langchain-core
-langchain-openai
 langchain-huggingface
-sentence-transformers
+langchain-openai
+chromadb
 faiss-cpu
+sentence-transformers
+requests
