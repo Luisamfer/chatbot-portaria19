@@ -16,7 +16,7 @@ st.set_page_config(page_title="Chatbot da Portaria nº 19/2025", layout="wide")
 st.title("🤖 Chatbot da Portaria nº 19/2025 - MDA")
 st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base no texto oficial.")
 
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or st.text_input("🔑 Insira sua chave da OpenAI:", type="password")
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 html_path = "portaria19.html"
 if not os.path.exists(html_path):
