@@ -20,11 +20,6 @@ st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base no te
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 html_path = "portaria19.html"
-if not os.path.exists(html_path):
-    url = "https://www.in.gov.br/web/dou/-/portaria-n-19-de-21-de-marco-de-2025-619527337"
-    response = requests.get(url)
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(response.text)
 
 def carregar_documentos():
     with open(html_path, "r", encoding="utf-8") as f:
