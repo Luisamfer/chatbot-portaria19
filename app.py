@@ -32,7 +32,6 @@ def carregar_documentos():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     return splitter.split_documents(dados)
 
-@st.cache_resource
 def carregar_vectorstore(docs):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
     db = Chroma.from_documents(docs, embeddings, persist_directory="db_portaria")
