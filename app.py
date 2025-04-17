@@ -34,16 +34,16 @@ def carregar_documentos():
     return [Document(page_content=texto_extraido)]
 
 @st.cache_resource
-def carregar_vectorstore(docs):
+def carregar_vectorstore():
+    documentos = carregar_documentos()
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    chunks = splitter.split_documents(docs)
+    chunks = splitter.split_documents(documentos)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
     db = Chroma.from_documents(chunks, embeddings, persist_directory="db_portaria")
     return db
 
 if OPENAI_API_KEY:
-    documentos = carregar_documentos()
-    vector_db = carregar_vectorstore(documentos)
+    vector_db = carregar_vectorstore()
 
     def format_docs(documentos):
         return "\n\n".join(doc.page_content for doc in documentos)
@@ -69,3 +69,4 @@ if OPENAI_API_KEY:
             st.markdown(f"**Resposta:** {resposta}")
 else:
     st.warning("Por favor, configure sua chave da OpenAI no menu de secrets.")
+
