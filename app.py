@@ -12,12 +12,15 @@ from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+# Configuração da página
 st.set_page_config(page_title="Chatbot da Portaria nº 19/2025", layout="wide")
 st.title("🤖 Chatbot da Portaria nº 19/2025 - MDA")
 st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base no texto oficial.")
 
+# Chave da OpenAI
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or st.text_input("🔑 Insira sua chave da OpenAI:", type="password")
 
+# Baixar portaria se necessário
 html_path = "portaria19.html"
 if not os.path.exists(html_path):
     url = "https://www.in.gov.br/web/dou/-/portaria-n-19-de-21-de-marco-de-2025-619527337"
@@ -25,6 +28,7 @@ if not os.path.exists(html_path):
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(response.text)
 
+# Carregamento de documentos e vetores
 @st.cache_data
 def carregar_documentos():
     loader = BSHTMLLoader(html_path)
@@ -32,14 +36,15 @@ def carregar_documentos():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     return splitter.split_documents(dados)
 
-def carregar_vectorstore(docs):
+@st.cache_resource
+def carregar_vectorstore():
+    documentos = carregar_documentos()
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    db = FAISS.from_documents(docs, embeddings)
+    db = FAISS.from_documents(documentos, embeddings)
     return db
 
 if OPENAI_API_KEY:
-    documentos = carregar_documentos()
-    vector_db = carregar_vectorstore(documentos)
+    vector_db = carregar_vectorstore()
 
     def format_docs(documentos):
         return "\n\n".join(doc.page_content for doc in documentos)
@@ -58,7 +63,6 @@ if OPENAI_API_KEY:
     )
 
     pergunta = st.text_input("✍️ Faça sua pergunta sobre a Portaria:")
-
     if pergunta:
         with st.spinner("Gerando resposta..."):
             resposta = rag.invoke(pergunta)
