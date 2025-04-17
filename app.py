@@ -1,12 +1,11 @@
 import streamlit as st
 import os
-import requests
 from bs4 import BeautifulSoup
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 
 from langchain import hub
 from langchain_openai import ChatOpenAI
@@ -34,7 +33,7 @@ def carregar_vectorstore():
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
     chunks = splitter.split_documents(documentos)
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    db = Chroma.from_documents(chunks, embeddings, persist_directory="db_portaria")
+    db = FAISS.from_documents(chunks, embeddings)
     return db
 
 if OPENAI_API_KEY:
@@ -64,4 +63,3 @@ if OPENAI_API_KEY:
             st.markdown(f"**Resposta:** {resposta}")
 else:
     st.warning("Por favor, configure sua chave da OpenAI no menu de secrets.")
-
