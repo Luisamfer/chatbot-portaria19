@@ -5,7 +5,7 @@ import requests
 from langchain_community.document_loaders import BSHTMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 
 from langchain import hub
 from langchain_openai import ChatOpenAI
@@ -34,7 +34,7 @@ def carregar_documentos():
 
 def carregar_vectorstore(docs):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    db = Chroma.from_documents(docs, embeddings, persist_directory="db_portaria")
+    db = FAISS.from_documents(docs, embeddings)
     return db
 
 if OPENAI_API_KEY:
