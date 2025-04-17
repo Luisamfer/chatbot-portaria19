@@ -1,63 +1,73 @@
 import streamlit as st
-from bs4 import BeautifulSoup
-from langchain_core.documents import Document
+import os
+import requests
+
+from langchain_community.document_loaders import BSHTMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores import Chroma
+
 from langchain import hub
 from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+# --- CONFIGURAÇÃO DA INTERFACE ---
 st.set_page_config(page_title="Chatbot da Portaria nº 19/2025", layout="wide")
 st.title("🤖 Chatbot da Portaria nº 19/2025 - MDA")
-st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base no texto oficial.")
+st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base na Portaria nº 19/2025 - MDA.")
 
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+# --- CHAVE DA API OPENAI ---
+OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY")
 
-# Use o HTML que você já salvou no repositório
+# --- DOWNLOAD DO HTML DA PORTARIA ---
 html_path = "portaria19.html"
+if not os.path.exists(html_path):
+    url = "https://www.in.gov.br/web/dou/-/portaria-n-19-de-21-de-marco-de-2025-619527337"
+    response = requests.get(url)
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(response.text)
 
+# --- CARREGAMENTO E PROCESSAMENTO DO DOCUMENTO ---
+@st.cache_data
 def carregar_documentos():
-    with open(html_path, "r", encoding="utf-8") as f:
-        html = f.read()
-    soup = BeautifulSoup(html, "html.parser")
-    texto = soup.get_text()
-    return [Document(page_content=texto)]
+    loader = BSHTMLLoader(html_path)
+    dados = loader.load()
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    return splitter.split_documents(dados)
 
 @st.cache_resource
-def carregar_vectorstore():
-    documentos = carregar_documentos()
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-    chunks = splitter.split_documents(documentos)
+def carregar_vectorstore(docs):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    vectorstore = FAISS.from_documents(chunks, embeddings)
-    return vectorstore
+    db = Chroma.from_documents(docs, embeddings, persist_directory="db_portaria")
+    return db
 
 if OPENAI_API_KEY:
-    db = carregar_vectorstore()
+    documentos = carregar_documentos()
+    vector_db = carregar_vectorstore(documentos)
 
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+    def format_docs(documentos):
+        return "\n\n".join(doc.page_content for doc in documentos)
 
     llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini")
-    prompt = hub.pull("rlm/rag-prompt")
+    prompt_template = hub.pull("rlm/rag-prompt")
 
-    rag_chain = (
+    rag = (
         {
             "question": RunnablePassthrough(),
-            "context": db.as_retriever(k=5) | format_docs,
+            "context": vector_db.as_retriever(k=5) | format_docs,
         }
-        | prompt
+        | prompt_template
         | llm
         | StrOutputParser()
     )
 
+    # --- INTERAÇÃO DO USUÁRIO ---
     pergunta = st.text_input("✍️ Faça sua pergunta sobre a Portaria:")
 
     if pergunta:
         with st.spinner("Gerando resposta..."):
-            resposta = rag_chain.invoke(pergunta)
+            resposta = rag.invoke(pergunta)
             st.markdown(f"**Resposta:** {resposta}")
 else:
-    st.warning("Configure sua chave da OpenAI em `.streamlit/secrets.toml`")
+    st.warning("Por favor, insira sua chave da OpenAI.")
