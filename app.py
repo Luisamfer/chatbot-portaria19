@@ -67,7 +67,7 @@ if OPENAI_API_KEY:
     def format_docs(documentos):
         return "\n\n".join(doc.page_content for doc in documentos)
 
-    llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini")
+    llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o-mini", temperature=0)
     prompt_template = hub.pull("rlm/rag-prompt")
 
     rag = (
