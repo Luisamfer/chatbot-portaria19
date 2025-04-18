@@ -25,7 +25,8 @@ Este assistente virtual foi desenvolvido para responder dúvidas com base no con
 
 Você pode perguntar, por exemplo:
 - *Quais documentos são necessários para o CAF?*
-- *Posso emitir CAF para o meu tio?*
+- *Onde posso emitir o CAF?*
+- *O CAF é gratuito?*
 
 Digite sua pergunta abaixo e receba uma resposta baseada diretamente no texto da portaria.
 """)
