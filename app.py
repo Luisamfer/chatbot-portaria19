@@ -51,7 +51,7 @@ if not os.path.exists(html_path):
 def carregar_documentos():
     loader = BSHTMLLoader(html_path)
     dados = loader.load()
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     return splitter.split_documents(dados)
 
 @st.cache_resource
@@ -73,7 +73,7 @@ if OPENAI_API_KEY:
     rag = (
         {
             "question": RunnablePassthrough(),
-            "context": vector_db.as_retriever(k=5) | format_docs,
+            "context": vector_db.as_retriever(k=8) | format_docs,
         }
         | prompt_template
         | llm
