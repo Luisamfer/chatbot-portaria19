@@ -25,11 +25,14 @@ Este assistente virtual foi desenvolvido para responder dúvidas com base no con
 
 Você pode perguntar, por exemplo:
 - *Quais documentos são necessários para o CAF?*
-- *Onde posso emitir meu CAF?*
-- *Não tenho renda, posso ter um CAF?*
+- *Posso emitir CAF para o meu tio?*
 
 Digite sua pergunta abaixo e receba uma resposta baseada diretamente no texto da portaria.
 """)
+
+# Inicializa o histórico na sessão
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 # Chave da OpenAI
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or st.text_input("🔑 Insira sua chave da OpenAI:", type="password")
@@ -76,10 +79,20 @@ if OPENAI_API_KEY:
         | StrOutputParser()
     )
 
+    # Campo de entrada
     pergunta = st.text_input("✍️ Faça sua pergunta sobre a Portaria:")
+
     if pergunta:
         with st.spinner("Gerando resposta..."):
             resposta = rag.invoke(pergunta)
-            st.markdown(f"**Resposta:** {resposta}")
+            st.session_state.chat_history.append(("Você", pergunta))
+            st.session_state.chat_history.append(("Assistente", resposta))
+
+    # Exibir histórico de perguntas e respostas
+    for autor, mensagem in st.session_state.chat_history:
+        if autor == "Você":
+            st.markdown(f"**🧑‍💼 {autor}:** {mensagem}")
+        else:
+            st.markdown(f"**🤖 {autor}:** {mensagem}")
 else:
     st.warning("Por favor, insira sua chave da OpenAI.")
