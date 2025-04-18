@@ -12,18 +12,29 @@ from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# Configuração da página
 st.set_page_config(page_title="Chatbot da Portaria nº 19/2025", layout="wide")
 
-# Exibindo a logo do CAF
-st.image("assets/logo_caf.png", width=200)  # Carregar a logo do CAF
-st.title("🤖 Chatbot da Portaria nº 19/2025 - MDA")
-st.markdown("Faça perguntas sobre a Portaria e obtenha respostas com base no texto oficial.")
+# Adicionando a logo do CAF
+st.image("assets/logo_caf.png", width=200)
 
-# Chave da OpenAI
+# Texto de entrada mais elaborado
+st.title("🤖 Chatbot da Portaria nº 19/2025 - MDA")
+st.markdown("""
+    Bem-vindo ao chatbot interativo sobre a **Portaria nº 19 de 21 de março de 2025** do Ministério do Desenvolvimento Agrário e Agricultura Familiar (MDA).
+    Com este chatbot, você poderá fazer perguntas sobre o conteúdo da portaria e obter respostas precisas.
+
+    **Como Funciona:**
+    - Basta digitar sua dúvida sobre a portaria e o sistema irá procurar as informações relevantes no conteúdo oficial.
+
+    **Exemplo de Pergunta:**
+    - "Qual a documentação obrigatória para inscrição no CAF?"
+    - "O CAF é gratuito?"
+    
+    O chatbot está aqui para facilitar seu acesso à informação de forma rápida e eficiente!
+    """, unsafe_allow_html=True)
+
 OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or st.text_input("🔑 Insira sua chave da OpenAI:", type="password")
 
-# Download do HTML da portaria
 html_path = "portaria19.html"
 if not os.path.exists(html_path):
     url = "https://www.in.gov.br/web/dou/-/portaria-n-19-de-21-de-marco-de-2025-619527337"
@@ -31,7 +42,6 @@ if not os.path.exists(html_path):
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(response.text)
 
-# Carregamento e vetorização
 @st.cache_data
 def carregar_documentos():
     loader = BSHTMLLoader(html_path)
@@ -65,54 +75,12 @@ if OPENAI_API_KEY:
         | StrOutputParser()
     )
 
-    # --- FRONTEND MELHORADO ---
+    pergunta = st.text_input("✍️ Faça sua pergunta sobre a Portaria:")
 
-    # Estilo visual
-    st.markdown("""
-        <style>
-            .chat {
-                background-color: #f7f9fc;
-                padding: 1rem;
-                border-radius: 1rem;
-                margin-bottom: 1rem;
-            }
-            .user {
-                background-color: #dbeafe;
-                padding: 1rem;
-                border-radius: 1rem;
-                margin-bottom: 0.5rem;
-            }
-            .bot {
-                background-color: #dcfce7;
-                padding: 1rem;
-                border-radius: 1rem;
-                margin-bottom: 1rem;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Inicializa o histórico na sessão
-    if "historico" not in st.session_state:
-        st.session_state.historico = []
-
-    # Formulário de entrada
-    with st.form("formulario"):
-        pergunta = st.text_input("✍️ Sua pergunta sobre a Portaria:", placeholder="Ex: Quais documentos são exigidos para o CAF?")
-        enviar = st.form_submit_button("Enviar")
-
-    if pergunta and enviar:
-        with st.spinner("💬 Gerando resposta..."):
+    if pergunta:
+        with st.spinner("Gerando resposta..."):
             resposta = rag.invoke(pergunta)
-
-        st.session_state.historico.append((pergunta, resposta))
-
-    # Mostra histórico de perguntas e respostas
-    if st.session_state.historico:
-        st.subheader("📚 Histórico da Conversa:")
-        for idx, (q, r) in enumerate(reversed(st.session_state.historico), 1):
-            st.markdown(f'<div class="user"><b>Você:</b><br>{q}</div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="bot"><b>Chatbot:</b><br>{r}</div>', unsafe_allow_html=True)
-
+            st.markdown(f"**Resposta:** {resposta}")
 else:
     st.warning("Por favor, insira sua chave da OpenAI.")
 
