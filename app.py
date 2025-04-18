@@ -25,7 +25,7 @@ Este assistente virtual foi desenvolvido para responder dúvidas com base no con
 
 Você pode perguntar, por exemplo:
 - *Quais documentos são necessários para o CAF?*
-- *Quais são os objetivos da portaria?*
+- *Posso emitir CAF para o meu tio?*
 
 Digite sua pergunta abaixo e receba uma resposta baseada diretamente no texto da portaria.
 """)
